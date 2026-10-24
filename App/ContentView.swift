@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftReaderCore
 import UniformTypeIdentifiers
 
 struct ContentView: View {
@@ -18,18 +17,14 @@ struct ContentView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("你的下一段故事")
-                            .font(.largeTitle.bold())
-                        Text("本地书籍 · 安静阅读 · 自由定制")
-                            .foregroundStyle(.secondary)
+                        Text("你的下一段故事").font(.largeTitle.bold())
+                        Text("本地书籍 · 安静阅读 · 自由定制").foregroundStyle(.secondary)
                     }
                     .padding(.top, 12)
 
                     Button { showingImporter = true } label: {
                         Label("导入 TXT 书籍", systemImage: "plus")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 15)
+                            .font(.headline).frame(maxWidth: .infinity).padding(.vertical, 15)
                     }
                     .buttonStyle(.borderedProminent)
 
@@ -45,23 +40,13 @@ struct ContentView: View {
                                 VStack(alignment: .leading, spacing: 9) {
                                     ZStack {
                                         RoundedRectangle(cornerRadius: 14)
-                                            .fill(LinearGradient(
-                                                colors: [.indigo.opacity(0.85), .purple.opacity(0.75)],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ))
+                                            .fill(LinearGradient(colors: [.indigo.opacity(0.85), .purple.opacity(0.75)], startPoint: .topLeading, endPoint: .bottomTrailing))
                                         Image(systemName: "book.closed.fill")
-                                            .font(.system(size: 34))
-                                            .foregroundStyle(.white.opacity(0.92))
+                                            .font(.system(size: 34)).foregroundStyle(.white.opacity(0.92))
                                     }
                                     .frame(height: 175)
-                                    Text(book.title)
-                                        .font(.headline)
-                                        .foregroundStyle(.primary)
-                                        .lineLimit(2)
-                                    Text(book.author)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                    Text(book.title).font(.headline).foregroundStyle(.primary).lineLimit(2)
+                                    Text(book.author).font(.caption).foregroundStyle(.secondary)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             }
@@ -74,21 +59,12 @@ struct ContentView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showingImporter = true } label: {
-                        Image(systemName: "plus")
-                    }
-                    .accessibilityLabel("导入书籍")
+                    Button { showingImporter = true } label: { Image(systemName: "plus") }
+                        .accessibilityLabel("导入书籍")
                 }
             }
-            .fileImporter(
-                isPresented: $showingImporter,
-                allowedContentTypes: [.plainText],
-                allowsMultipleSelection: false,
-                onCompletion: handleImport
-            )
-            .sheet(item: $selectedBook) { book in
-                ReaderView(book: book)
-            }
+            .fileImporter(isPresented: $showingImporter, allowedContentTypes: [.plainText], allowsMultipleSelection: false, onCompletion: handleImport)
+            .sheet(item: $selectedBook) { ReaderView(book: $0) }
             .alert("导入提示", isPresented: Binding(
                 get: { importMessage != nil },
                 set: { if !$0 { importMessage = nil } }
@@ -106,8 +82,9 @@ struct ContentView: View {
             guard let url = urls.first else { return }
             do {
                 let parsed = try PlainTextBookParser.parse(url: url)
-                books.insert(Book(title: parsed.title, fileURL: url), at: 0)
-                selectedBook = Book(title: parsed.title, fileURL: url)
+                let book = Book(title: parsed.title, fileURL: url)
+                books.insert(book, at: 0)
+                selectedBook = book
             } catch {
                 importMessage = error.localizedDescription
             }
@@ -127,37 +104,25 @@ private struct ReaderView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                Text(content)
-                    .font(.system(size: fontSize, design: .serif))
-                    .lineSpacing(10)
+                Text(content).font(.system(size: fontSize, design: .serif)).lineSpacing(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 28)
+                    .padding(.horizontal, 24).padding(.vertical, 28)
             }
             .background(isDark ? Color.black : Color(red: 0.98, green: 0.96, blue: 0.91))
             .foregroundStyle(isDark ? Color.white : Color.primary)
-            .navigationTitle(book.title)
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle(book.title).navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("完成") { dismiss() }
-                }
+                ToolbarItem(placement: .topBarLeading) { Button("完成") { dismiss() } }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Toggle("夜间模式", isOn: $isDark)
-                        Slider(value: $fontSize, in: 16...30, step: 1) {
-                            Text("字号")
-                        }
-                    } label: {
-                        Image(systemName: "textformat.size")
-                    }
+                        Slider(value: $fontSize, in: 16...30, step: 1) { Text("字号") }
+                    } label: { Image(systemName: "textformat.size") }
                 }
             }
             .task {
                 guard let url = book.fileURL else { return }
-                if let parsed = try? PlainTextBookParser.parse(url: url) {
-                    content = parsed.text
-                }
+                if let parsed = try? PlainTextBookParser.parse(url: url) { content = parsed.text }
             }
         }
     }
